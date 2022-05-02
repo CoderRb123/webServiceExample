@@ -6,7 +6,7 @@ android {
     compileSdk 32
 
     defaultConfig {
-        applicationId "com.example.webservices"
+        applicationId "com.firebase.crudrbcoder"
         minSdk 25
         targetSdk 32
         versionCode 1
