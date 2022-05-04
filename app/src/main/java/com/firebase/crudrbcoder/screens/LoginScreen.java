@@ -2,6 +2,7 @@ package com.firebase.crudrbcoder.screens;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -54,6 +55,10 @@ public class LoginScreen extends AppCompatActivity {
     }
 
     private void loginProcess() {
+        ProgressDialog pd = new ProgressDialog(LoginScreen.this);
+        pd.setTitle("Logging you in");
+        pd.setMessage("Please wait...");
+        pd.show();
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -65,6 +70,7 @@ public class LoginScreen extends AppCompatActivity {
                     @Override
                     public void onResponse(LoginResponseModel model) {
                         if (model.isSuccess()) {
+                            runOnUiThread(pd::dismiss);
                             SharedPreferences preferences = getSharedPreferences("login", MODE_PRIVATE);
                             SharedPreferences.Editor edit = preferences.edit();
                             edit.putBoolean("isLogin", true);
@@ -73,8 +79,12 @@ public class LoginScreen extends AppCompatActivity {
                             edit.apply();
                             Intent intent = new Intent(LoginScreen.this, MainActivity.class);
                             startActivity(intent);
+
                         } else {
-                            Toast.makeText(LoginScreen.this,model.getMessage(), Toast.LENGTH_SHORT).show();
+                            runOnUiThread(() -> {
+                                Toast.makeText(LoginScreen.this, model.getMessage(), Toast.LENGTH_SHORT).show();
+                                pd.dismiss();
+                            });
                         }
                     }
 
@@ -82,7 +92,9 @@ public class LoginScreen extends AppCompatActivity {
                     public void onError(Exception e) {
                         e.printStackTrace();
                         Log.d("APISERVICE", e.getMessage());
-                        Toast.makeText(LoginScreen.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                      runOnUiThread(()->{
+                          Toast.makeText(LoginScreen.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                      });
                     }
                 });
             }

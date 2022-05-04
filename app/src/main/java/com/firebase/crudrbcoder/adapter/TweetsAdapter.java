@@ -60,9 +60,11 @@ public class TweetsAdapter extends RecyclerView.Adapter<TweetsAdapter.MyViewHold
         holder.cardMain.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(context, NewTweet.class);
-                intent.putExtra("current", tweetsModel);
-                context.startActivity(intent);
+                if (tweetsModel.getUserEmail().equals(preferences.getString("email", ""))) {
+                    Intent intent = new Intent(context, NewTweet.class);
+                    intent.putExtra("current", tweetsModel);
+                    context.startActivity(intent);
+                }
             }
         });
 

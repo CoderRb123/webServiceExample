@@ -6,6 +6,9 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -71,19 +74,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchTweets() {
-
+        ProgressDialog progressdialog = new ProgressDialog(this);
+        progressdialog.setTitle("Fetching Tweets");
+        progressdialog.setMessage("Please Wait....");
+        progressdialog.show();
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 apiService.fetchTweets(new ApiResponseInterface<TweetResponseModel>() {
                     @Override
                     public void onResponse(TweetResponseModel model) {
-                        runOnUiThread(() -> setupAdapter(model));
+                        runOnUiThread(() -> {
+                            setupAdapter(model);
+                            progressdialog.dismiss();
+                        });
                     }
 
                     @Override
                     public void onError(Exception e) {
-
+                        runOnUiThread(() -> {
+                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                            progressdialog.dismiss();
+                        });
                     }
                 });
             }
@@ -95,23 +107,36 @@ public class MainActivity extends AppCompatActivity {
         tweetsAdapter = new TweetsAdapter(model, this, new tweetCardActionInterface() {
             @Override
             public void onDelete(String id) {
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        apiService.delete(id, new ApiResponseInterface<DeleteTweetResponseModel>() {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Alert")
+                        .setMessage("Do you want to delete this tweet")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             @Override
-                            public void onResponse(DeleteTweetResponseModel model) {
-                                fetchTweets();
-                            }
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                Thread thread = new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
 
-                            @Override
-                            public void onError(Exception e) {
-                                runOnUiThread(() -> Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show());
+                                        apiService.delete(id, new ApiResponseInterface<DeleteTweetResponseModel>() {
+                                            @Override
+                                            public void onResponse(DeleteTweetResponseModel model) {
+                                                runOnUiThread(MainActivity.this::fetchTweets);
+                                            }
+
+                                            @Override
+                                            public void onError(Exception e) {
+                                                runOnUiThread(() -> Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show());
+                                            }
+                                        });
+                                    }
+                                });
+                                thread.start();
                             }
-                        });
-                    }
-                });
-                thread.start();
+                        })
+                .setNegativeButton("No ",null)
+                .show();
+
+
             }
         });
         recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));

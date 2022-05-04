@@ -3,6 +3,7 @@ package com.firebase.crudrbcoder.screens;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -63,6 +64,10 @@ public class NewTweet extends AppCompatActivity {
     }
 
     private void postTweet() {
+        ProgressDialog progressdialog = new ProgressDialog(this);
+        progressdialog.setMessage("Please Wait....");
+        progressdialog.show();
+
         ApiService apiService = new ApiService();
         SharedPreferences preferences = getSharedPreferences("login", MODE_PRIVATE);
         NewTweetRequestModel newTweetRequestModel = new NewTweetRequestModel(
@@ -78,15 +83,16 @@ public class NewTweet extends AppCompatActivity {
                     public void onResponse(NewTweetResponseModel model) {
                         runOnUiThread(() -> {
                             Toast.makeText(NewTweet.this, model.getMessage(), Toast.LENGTH_SHORT).show();
-                            finish();
                             Intent intent = new Intent(NewTweet.this, MainActivity.class);
                             startActivity(intent);
+                            progressdialog.dismiss();
                         });
 
                     }
 
                     @Override
                     public void onError(Exception e) {
+                        progressdialog.dismiss();
                         runOnUiThread(() -> Toast.makeText(NewTweet.this, e.getMessage(), Toast.LENGTH_SHORT).show());
                     }
                 });
@@ -96,6 +102,10 @@ public class NewTweet extends AppCompatActivity {
     }
 
     private void updateTweet() {
+        ProgressDialog pd = new ProgressDialog(NewTweet.this);
+        pd.setTitle("Updating");
+        pd.setMessage("Please Wait...");
+        pd.show();
         ApiService apiService = new ApiService();
         UpdateTweetRequestModel updateTweetRequestModel = new UpdateTweetRequestModel(
                 tweet.getText().toString(),
@@ -109,6 +119,7 @@ public class NewTweet extends AppCompatActivity {
                     public void onResponse(UpdateTweetResponseModel model) {
                         if (model.isSuccess()) {
                             runOnUiThread(() -> {
+                                pd.dismiss();
                                 Toast.makeText(NewTweet.this, model.getMessage(), Toast.LENGTH_SHORT).show();
                                 finish();
                                 Intent intent = new Intent(NewTweet.this, MainActivity.class);
@@ -116,6 +127,7 @@ public class NewTweet extends AppCompatActivity {
                             });
                         } else {
                             runOnUiThread(() -> {
+                                pd.dismiss();
                                 Toast.makeText(NewTweet.this, model.getMessage(), Toast.LENGTH_SHORT).show();
                             });
                         }
@@ -124,7 +136,10 @@ public class NewTweet extends AppCompatActivity {
 
                     @Override
                     public void onError(Exception e) {
-                        runOnUiThread(() -> Toast.makeText(NewTweet.this, e.getMessage(), Toast.LENGTH_SHORT).show());
+                        runOnUiThread(() -> {
+                            pd.dismiss();
+                            Toast.makeText(NewTweet.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
                     }
                 });
             }
@@ -136,7 +151,7 @@ public class NewTweet extends AppCompatActivity {
         tweet = findViewById(R.id.tweetInput);
         tweetBtn = findViewById(R.id.tweetBtn);
         toolbar = findViewById(R.id.toolbar2);
-        toolbar.setTitle( isUpdate ? "Update Tweet" :"New Tweet");
-        toolbar.setTitleTextColor(getResources().getColor(R.color.white,getTheme()));
+        toolbar.setTitle(isUpdate ? "Update Tweet" : "New Tweet");
+        toolbar.setTitleTextColor(getResources().getColor(R.color.white, getTheme()));
     }
 }

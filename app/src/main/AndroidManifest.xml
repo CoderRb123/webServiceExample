@@ -14,6 +14,7 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".screens.NewTweet"
+            android:parentActivityName=".screens.MainActivity"
             android:exported="false" />
         <activity
             android:name=".screens.SignUpScreen"
